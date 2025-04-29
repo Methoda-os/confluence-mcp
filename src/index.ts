@@ -2,6 +2,7 @@ import { FastMCP } from "fastmcp";
 import { z } from "zod";
 import axios from "axios";
 import dotenv from "dotenv";
+import { NodeHtmlMarkdown, NodeHtmlMarkdownOptions } from "node-html-markdown";
 
 dotenv.config();
 
@@ -11,8 +12,12 @@ interface Page {
 }
 
 const server = new FastMCP({
-  name: "example-server",
+  name: "confluence-search",
   version: "1.0.0",
+  instructions: `This server can be used to search and retrieve Confluence content.
+    Search tools will only return first 20 results. 
+    If you can't find what you're looking for in the first 20 results, try narrowing your search.
+    `,
 });
 
 /**
@@ -120,8 +125,14 @@ server.addTool({
   name: "confluence_search_cql",
   description: "Search Confluence pages using CQL (Confluence Query Language).",
   parameters: z.object({
-    cql: z.string(),
+    cql: z.string({
+      description: "The CQL query string to search Confluence content.",
+    }),
   }),
+  annotations: {
+    readOnlyHint: true,
+    title: "Search Confluence with CQL",
+  },
   async execute({ cql }) {
     const client = getConfluenceClient();
     // Prepend /wiki/rest/api to endpoint
@@ -149,16 +160,24 @@ server.addTool({
   name: "confluence_get_page_by_id",
   description: "Get a Confluence page by its ID.",
   parameters: z.object({
-    id: z.string(),
+    id: z.string({ description: "The unique ID of the Confluence page." }),
   }),
+  annotations: {
+    readOnlyHint: true,
+    title: "Get Confluence Page by ID",
+  },
   async execute({ id }) {
     const client = getConfluenceClient();
     // Prepend /wiki/rest/api to endpoint
     const response = await client.get(`/wiki/rest/api/content/${id}`, {
       params: {
-        expand: "body.storage",
+        expand: "body.export_view",
       },
     });
+    const markdown = NodeHtmlMarkdown.translate(
+      response.data.body.export_view.value
+    );
+
     return {
       content: [
         {
@@ -166,7 +185,7 @@ server.addTool({
           text: JSON.stringify({
             id: response.data.id,
             title: response.data.title,
-            body: response.data.body.storage.value,
+            body: markdown,
           }),
         },
       ],
@@ -183,8 +202,14 @@ server.addTool({
   name: "confluence_list_pages_in_space",
   description: "List all pages in a Confluence space.",
   parameters: z.object({
-    spaceKey: z.string(),
+    spaceKey: z.string({
+      description: "The key of the Confluence space (e.g., 'DEV').",
+    }),
   }),
+  annotations: {
+    readOnlyHint: true,
+    title: "List Pages in Space",
+  },
   async execute({ spaceKey }) {
     const client = getConfluenceClient();
     // Prepend /wiki/rest/api to endpoint
@@ -213,8 +238,14 @@ server.addTool({
   name: "confluence_list_page_children",
   description: "List the children of a Confluence page.",
   parameters: z.object({
-    id: z.string(),
+    id: z.string({
+      description: "The unique ID of the parent Confluence page.",
+    }),
   }),
+  annotations: {
+    readOnlyHint: true,
+    title: "List Child Pages",
+  },
   async execute({ id }) {
     const client = getConfluenceClient();
     // Prepend /wiki/rest/api to endpoint
@@ -243,8 +274,15 @@ server.addTool({
   description:
     "List all pages created by a specific user (by Atlassian account ID).",
   parameters: z.object({
-    userAccountId: z.string(),
+    userAccountId: z.string({
+      description:
+        "The Atlassian account ID of the user who created the pages.",
+    }),
   }),
+  annotations: {
+    readOnlyHint: true,
+    title: "List Pages by User",
+  },
   async execute({ userAccountId }) {
     const client = getConfluenceClient();
     // CQL for creator = user, endpoint prepended
@@ -288,8 +326,15 @@ server.addTool({
   description:
     "Search for Atlassian users by email address or display name (Jira Cloud API).",
   parameters: z.object({
-    query: z.string(),
+    query: z.string({
+      description:
+        "The search string (email address or display name) to find Atlassian users.",
+    }),
   }),
+  annotations: {
+    readOnlyHint: true,
+    title: "Search Atlassian Users",
+  },
   async execute({ query }) {
     const client = getConfluenceClient();
     // The /rest/api/3/user/search endpoint is used for user lookup by email or display name.
