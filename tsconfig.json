@@ -1,0 +1,50 @@
+{
+  // The root of the TypeScript configuration file
+  "compilerOptions": {
+    // The directory where the compiled JavaScript files will be placed
+    "outDir": "dist",
+
+    // The root directory of TypeScript source files
+    "rootDir": "src",
+
+    // Target ECMAScript version for output JavaScript
+    "target": "ES2020", // Modern JS features, change as needed
+
+    // Module system to use in the output
+    "module": "ESNext", // Use ESNext for modern Node.js, or "CommonJS" for older setups
+
+    // Allow default imports from modules with no default export
+    "esModuleInterop": true,
+
+    // Enable all strict type-checking options
+    "strict": true,
+
+    // Enable source maps for easier debugging
+    "sourceMap": true,
+
+    // Resolve modules using Node.js resolution logic
+    "moduleResolution": "node",
+
+    // Include type definitions from node_modules/@types
+    "typeRoots": ["./node_modules/@types"],
+
+    // Allow JavaScript files to be compiled (set to false for pure TS projects)
+    "allowJs": false,
+
+    // Do not emit output if there are type errors
+    "noEmitOnError": true,
+
+    // List of libraries to include in the compilation
+    "lib": ["ES2020"],
+
+    // Enable support for top-level await
+    "allowSyntheticDefaultImports": true,
+
+    // Skip type checking of all declaration files in node_modules
+    "skipLibCheck": true
+  },
+  // Files and folders to include in the compilation
+  "include": ["src/**/*"],
+  // Files and folders to exclude from the compilation
+  "exclude": ["node_modules", "dist"]
+} 
